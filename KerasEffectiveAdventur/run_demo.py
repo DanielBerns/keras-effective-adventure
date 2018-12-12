@@ -1,6 +1,6 @@
 from keras.optimizers import SGD
 
-from Demo import Demo
+from Core import Demo
 from NN.conv import ShallowNet
 
 def get_model(args):
