@@ -1,1 +1,1 @@
-from .Demo import Demo
+from .Coach import Coach

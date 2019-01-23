@@ -1,6 +1,6 @@
 # import the necessary packages
 import os
-from Processors import ContextException
+from .Processors import ContextException
 
 class Loader:
     def __init__(self, source, context, processors):
@@ -28,7 +28,9 @@ class Loader:
     
     def execute(self):
         self.context.start()
-        for (count, image, label) in self.source.read():
+        count = -1
+        for (image, label) in self.source.read():
+            count += 1
             self.context.count = count
             self.context.image = image
             self.context.label = label

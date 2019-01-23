@@ -4,20 +4,18 @@
 # import the necessary packages
 import argparse
 
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from keras.models import load_model
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Sources import ImageWithLabelSource
-from Processors import ResizeImageProcessor
-from Processors import ImageToArrayProcessor
-from Processors import ImageContext
-from Loaders import Loader
+from .Sources import ImageWithLabelSource
+from .Processors import ResizeImageProcessor
+from .Processors import ImageToArrayProcessor
+from .Processors import ImageContext
+from .Loaders import Loader
 
-class Train:
+class Coach:
     def __init__(self):       
         self._testX = None
         self._testY = None
@@ -35,11 +33,11 @@ class Train:
         # initialize the image preprocessor, load the dataset from disk,
         # and reshape the samples matrix
         source = ImageWithLabelSource(self._args["dataset"])
-        image_to_array = ImageToArrayProcessor()
+        # image_to_array = ImageToArrayProcessor()
         resize_image = ResizeImageProcessor(32, 32)
-        loader = Loader(source, [image_to_array, resize_image])
-        self._context = ImageContext(verbose=500)
-        loader.execute(self.context)
+        self._context = ImageContext(expected_shape=(32, 32, 3), verbose=500)
+        loader = Loader(source, self.context, [resize_image])
+        loader.execute()
 
     @property
     def testX(self):
@@ -65,23 +63,13 @@ class Train:
     def context(self):
         return self._context
 
-    def execute(self, model):
+    def train(self, model):
         # partition the data into training and testing splits
-        samples, labels = self.context.samples_and_labels()
-        label_encoder = self.context.label_encoder()
-        
-        (trainX, testX, trainY, testY) = train_test_split(
-            samples, labels, 
-            test_size=float(self.args["test_size"])/100.0, 
-            random_state=42)
-
-        # convert the labels from integers to vectors
-        trainY = LabelBinarizer().fit_transform(trainY)
-        testY = LabelBinarizer().fit_transform(testY)
+        (trainX, trainY, testX, testY) = self.context.get_dataset(float(self.args["test_size"])/100.0)
 
         self.testX = testX
         self.testY = testY
-        
+
         # train the network
         print("[INFO] training network...")
         H = model.fit(trainX, trainY, validation_data=(testX, testY), 
@@ -94,9 +82,7 @@ class Train:
         print(classification_report(
             testY.argmax(axis=1), 
             predictions.argmax(axis=1), 
-            target_names=list(label_encoder.classes_)))
-
-        self.save_model()
+            target_names=list(self.context.encoder.classes_)))
         
         # plot the training loss and accuracy
         plt.style.use("ggplot")
@@ -111,7 +97,7 @@ class Train:
         plt.legend()
         plt.show()
 
-    def validation(self, model, number_of_samples=-1):
+    def verify(self, model, number_of_samples=-1):
         label_encoder = self.context.label_encoder
         images_list, true_labels_list = self.get_random_images_and_labels(number_of_samples)
         
@@ -120,8 +106,8 @@ class Train:
         scores = model.predict(images_list, batch_size=32)
         predicted_labels_list = scores.argmax(axis=1)
         
-        true_names_list = label_encoder.inverse_transform(true_labels_list)
-        predicted_names_list = label_encoder.inverse_transform(predicted_labels_list)
+        true_names_list = self.context.encoder.inverse_transform(true_labels_list)
+        predicted_names_list = self.context.encoder.inverse_transform(predicted_labels_list)
         # loop over the sample images
         for k, image, true_name, predicted_name in zip(index, images_list, true_names_list, predicted_name_list):
             fig = plt.figure()

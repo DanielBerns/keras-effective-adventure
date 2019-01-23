@@ -1,6 +1,7 @@
 # import the necessary packages
 from skimage.transform import resize
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import img_to_array
 import numpy as np
 
@@ -12,7 +13,7 @@ class ContextException(Exception):
 
 #----------------------------------------------------------------------
 class ImageContext:
-    def __init__(self, expected_shape, verbose):
+    def __init__(self, expected_shape=(32, 32, 3), verbose=500):
         self._expected_shape = expected_shape
         self._verbose = verbose
         self._count = -1
@@ -20,9 +21,9 @@ class ImageContext:
         self._image = None
         self._label = None
         self._filepaths_list = None
-        self._label_encoder = LabelEncoder()
         self._samples_list = None
         self._labels_list = None
+        self._encoder = None
 
     @property
     def count(self):
@@ -70,6 +71,14 @@ class ImageContext:
             if (self.count % self.verbose) == 0:
                 print('{0:>5d} samples processed.'.format(self.count + 1))
 
+    @property
+    def encoder(self):
+        return self._encoder
+    
+    @encoder.setter
+    def encoder(self, value):
+        self._encoder = value
+
     def start(self):
         self._filepaths_list = []
         self._samples_list = []
@@ -78,13 +87,17 @@ class ImageContext:
     def stop(self):
         pass
 
-    def label_encoder(self):
-        return self._label_encoder
-        
-    def samples_and_labels(self):
+    def get_dataset(self, test_size):
         samples = np.array(self._samples_list)
-        labels = self._label_encoder.fit_transform(self._labels_list)
-        return samples, labels
+        encoder = LabelBinarizer().fit(self._labels_list)
+        labels = encoder.transform(self._labels_list)
+        (trainX, testX, trainY, testY) = train_test_split(
+            samples, labels, 
+            test_size=test_size, 
+            random_state=42)
+        self.encoder = encoder
+       
+        return trainX, trainY, testX, testY
                            
     @property
     def filepaths(self):
