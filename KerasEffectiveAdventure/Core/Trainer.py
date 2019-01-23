@@ -15,7 +15,7 @@ from .Processors import ImageToArrayProcessor
 from .Processors import ImageContext
 from .Loaders import Loader
 
-class Coach:
+class Trainer:
     def __init__(self):       
         self._testX = None
         self._testY = None
@@ -63,7 +63,7 @@ class Coach:
     def context(self):
         return self._context
 
-    def train(self, model):
+    def execute(self, model):
         # partition the data into training and testing splits
         (trainX, trainY, testX, testY) = self.context.get_dataset(float(self.args["test_size"])/100.0)
 
