@@ -20,4 +20,4 @@ def get_model(args):
 trainer = Trainer()
 model, model_filename = get_model(trainer.args)
 trainer.execute(model)
-model.save(model_file)
+model.save(model_filename)

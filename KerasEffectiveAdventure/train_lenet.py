@@ -10,8 +10,13 @@ def get_model(args):
     # initialize the model and the model_filename
     model = None
     print("[INFO] compiling model...")
-    model = LeNet.build(32, 32, 3, 3) # build(width, height, depth, classes, nlf='relu')
-    model.compile(loss="categorical_crossentropy", optimizer=SGD(lr=0.005), metrics=["accuracy"])
+    # build(width, height, depth, classes, nlf='relu')
+    model = LeNet.build(32, 32, 3, 3)
+    model.compile(
+            loss="categorical_crossentropy", 
+            optimizer=SGD(lr=0.005), 
+            metrics=["accuracy"]
+    )
     model_filename = str(Path(args['model'], 'lenet.h5').expanduser())
     return model, model_filename
     
