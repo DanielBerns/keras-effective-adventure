@@ -12,7 +12,7 @@ def print_classification_report(y_true, y_predicted, labels):
     print("Print Classification Report")
     print(classification_report(y_true, y_predicted, target_names=labels))
     value = accuracy_score(y_true, y_predicted)
-    print("Accuracy : {0:s}".format(str(value))
+    print("Accuracy : {0:s}".format(str(value)))
 
 
 def plot_confusion_matrix(y_true, y_predicted, labels):
