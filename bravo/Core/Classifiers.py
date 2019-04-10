@@ -72,6 +72,10 @@ class Classifier:
     @property
     def output(self):
         return self._output
+
+    @output.setter
+    def output(self, value):
+        self._output = value
     
     @property
     def predict_batch_size(self):
