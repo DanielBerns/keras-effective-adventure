@@ -1,8 +1,6 @@
 # import the necessary packages
 from pathlib import Path
-
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
-
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns

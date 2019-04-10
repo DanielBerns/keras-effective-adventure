@@ -4,7 +4,7 @@ from keras.datasets.mnist import load_data
 from keras.utils import to_categorical
 
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Flatten, BatchNormalization
 from keras.layers import Conv2D, MaxPooling2D, Activation
 
 import numpy as np
@@ -24,25 +24,40 @@ def get_keras_mnist_dataset(parameters=None):
     return train_X, train_y, test_X, test_y, data_shape, labels
 
 
-def build_LeNet(data_shape, num_classes):
-    print('# LeNet')
+def build_MiniVGGNet(data_shape, num_classes):
+    print('# MiniVGGNet')
     print("##   Build")
+    # initialize the model along with the input shape to be
+    # "channels last" and the channels dimension itself
     model = Sequential()
+    channels_dimension = -1
 
-    # first set of CONV => RELU
-    model.add(Conv2D(20, (3, 3), strides=(2, 2), padding="same", input_shape=data_shape))
+    # first CONV => RELU => CONV => RELU => POOL layer set
+    model.add(Conv2D(32, (3, 3), padding="same", input_shape=data_shape))
     model.add(Activation("relu"))
-    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(BatchNormalization(axis=channels_dimension))
+    model.add(Conv2D(32, (3, 3), padding="same"))
+    model.add(Activation("relu"))
+    model.add(BatchNormalization(axis=channels_dimension))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
 
-    # second set of CONV => RELU
-    model.add(Conv2D(50, (3, 3), strides=(2, 2), padding="same"))
+    # second CONV => RELU => CONV => RELU => POOL layer set
+    model.add(Conv2D(64, (3, 3), padding="same"))
     model.add(Activation("relu"))
-    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+    model.add(BatchNormalization(axis=channels_dimension))
+    model.add(Conv2D(64, (3, 3), padding="same"))
+    model.add(Activation("relu"))
+    model.add(BatchNormalization(axis=channels_dimension))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
 
     # first (and only) set of FC => RELU layers
     model.add(Flatten())
-    model.add(Dense(500))
+    model.add(Dense(512))
     model.add(Activation("relu"))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.5))
 
     # softmax classifier
     model.add(Dense(num_classes))
@@ -51,15 +66,12 @@ def build_LeNet(data_shape, num_classes):
     print("##   Compile")
     model.compile(optimizer='adadelta', loss="categorical_crossentropy", metrics = ['accuracy'])
 
-    model.summary()
-    
     return model
 
 
 if __name__ == '__main__':
     train_X, train_y, test_X, test_y, data_shape, labels = get_keras_mnist_dataset()
-    model = build_LeNet(data_shape, len(labels))
+    model = build_MiniVGGNet(data_shape, len(labels))
     classifier = Classifier()
     classifier.train_epochs = 4
-    classifier.output = 'bravo'
     classifier.train(model, train_X, train_y, test_X, test_y, labels)
