@@ -73,5 +73,5 @@ if __name__ == '__main__':
     train_X, train_y, test_X, test_y, data_shape, labels = get_keras_mnist_dataset()
     model = build_MiniVGGNet(data_shape, len(labels))
     classifier = Classifier()
-    classifier.train_epochs = 4
+    classifier.train_epochs = 100
     classifier.train(model, train_X, train_y, test_X, test_y, labels)
