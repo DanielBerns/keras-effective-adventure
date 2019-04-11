@@ -19,7 +19,7 @@ def get_keras_mnist_dataset(parameters=None):
     print('##   perform one-hot encoding on the classes')
     train_y = to_categorical(train_y, num_classes=10)
     test_y = to_categorical(test_y, num_classes=10)
-    labels = ["{0:d}".format(v) for v in range(10)]
+    labels = [v for v in range(10)]
     data_shape = (28, 28, 1)
     return train_X, train_y, test_X, test_y, data_shape, labels
 
@@ -64,7 +64,7 @@ def build_MiniVGGNet(data_shape, num_classes):
     model.add(Activation("softmax"))
 
     print("##   Compile")
-    model.compile(optimizer='adadelta', loss="categorical_crossentropy", metrics = ['accuracy'])
+    model.compile(optimizer='adam', loss="categorical_crossentropy", metrics = ['accuracy'])
 
     return model
 
@@ -74,4 +74,5 @@ if __name__ == '__main__':
     model = build_MiniVGGNet(data_shape, len(labels))
     classifier = Classifier()
     classifier.train_epochs = 100
+    classifier.output = 'charlie'
     classifier.train(model, train_X, train_y, test_X, test_y, labels)
