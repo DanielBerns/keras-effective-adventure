@@ -19,34 +19,36 @@ def get_keras_mnist_dataset(parameters=None):
     print('##   perform one-hot encoding on the classes')
     train_y = to_categorical(train_y, num_classes=10)
     test_y = to_categorical(test_y, num_classes=10)
-    labels = [v for v in range(10)]
+    labels = [str(v) for v in range(10)]
     data_shape = (28, 28, 1)
     return train_X, train_y, test_X, test_y, data_shape, labels
 
 
-def build_LeNet(data_shape, num_classes):
+def build_model(data_shape, num_classes):
     print('# LeNet')
     print("##   Build")
     model = Sequential()
-
-    # first set of CONV => RELU
-    model.add(Conv2D(20, (3, 3), strides=(2, 2), padding="same", input_shape=data_shape))
-    model.add(Activation("relu"))
-    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-
-    # second set of CONV => RELU
-    model.add(Conv2D(50, (3, 3), strides=(2, 2), padding="same"))
-    model.add(Activation("relu"))
-    # model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-
-    # first (and only) set of FC => RELU layers
+    model.add(Conv2D(32, (3, 3), padding='same',
+                     input_shape=data_shape))
+    model.add(Activation('relu'))
+    model.add(Conv2D(32, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+    
+    model.add(Conv2D(64, (3, 3), padding='same'))
+    model.add(Activation('relu'))
+    model.add(Conv2D(64, (3, 3)))
+    model.add(Activation('relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+    
     model.add(Flatten())
-    model.add(Dense(500))
-    model.add(Activation("relu"))
-
-    # softmax classifier
+    model.add(Dense(512))
+    model.add(Activation('relu'))
+    model.add(Dropout(0.5))
     model.add(Dense(num_classes))
-    model.add(Activation("softmax"))
+    model.add(Activation('softmax'))
 
     print("##   Compile")
     model.compile(optimizer='adadelta', loss="categorical_crossentropy", metrics = ['accuracy'])
@@ -58,8 +60,8 @@ def build_LeNet(data_shape, num_classes):
 
 if __name__ == '__main__':
     train_X, train_y, test_X, test_y, data_shape, labels = get_keras_mnist_dataset()
-    model = build_LeNet(data_shape, len(labels))
+    model = build_model(data_shape, len(labels))
     classifier = Classifier()
-    classifier.train_epochs = 4
+    classifier.train_epochs = 100
     classifier.output = 'bravo'
     classifier.train(model, train_X, train_y, test_X, test_y, labels)
