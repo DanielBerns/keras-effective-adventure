@@ -25,7 +25,7 @@ def get_keras_mnist_dataset(parameters=None):
 
 
 def build_model(data_shape, num_classes):
-    print('# LeNet')
+    print('# Model')
     print("##   Build")
     model = Sequential()
     model.add(Conv2D(32, (3, 3), padding='same',
