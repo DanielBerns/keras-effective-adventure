@@ -5,6 +5,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from keras.preprocessing.image import ImageDataGenerator
+
+
+def print_summary(target, model):
+    # https://stackoverflow.com/questions/41665799/keras-model-summary-object-to-string
+    strings = []
+    model.summary(print_fn=lambda x: strings.append(x))
+    model_summary = "\n".join(strings)
+    target.write(model_summary)
 
 def print_classification_report(y_true, y_predicted, labels):
     print("Print Classification Report")
@@ -38,12 +47,6 @@ def plot_history_loss_and_accuracy(history):
     axs[1].legend(['train', 'validation'], loc='upper left')
 
 
-def print_summary(model):
-    # https://stackoverflow.com/questions/41665799/keras-model-summary-object-to-string
-    strings = []
-    model.summary(print_fn=lambda x: strings.append(x))
-    model_summary = "\n".join(strings)
-    print(model_summary)
 
 
 class Classifier:
@@ -89,19 +92,23 @@ class Classifier:
     
     def train(self, model, train_X, train_y, test_X, test_y, labels):
         print("# Classifier")
-        print('##   Model Sumary')
-        print_summary(model)
-
-        print("##   Training network...")
-        history = model.fit(train_X, train_y, 
-                            validation_split=self.validation_split,
-                            batch_size=self.train_batch_size, 
-                            epochs=self.train_epochs, 
-                            verbose=self.verbose)
-        # test the network
-        print("##   Evaluating network...")
         output_path = Path(self.output)
         output_path.mkdir(mode=0o700, parents=True, exist_ok=True)
+        print('##   Model Sumary')
+        with open(Path(output_path, 'model_summary.txt'), 'w') as target:
+            print_summary(target, model)
+        print("##   Training network...")
+        
+        history = model.fit(train_X, train_y, 
+                            batch_size=self.train_batch_size,
+                            epochs=self.train_epochs, 
+                            validation_split=self.validation_split,
+                            verbose=2,
+                            shuffle=True)
+
+        weights_path = str(Path(output_path, 'weights.h5'))
+        model.save(weights_path)
+        print("##   Evaluating network...")
         predictions = model.predict(test_X, batch_size=self.predict_batch_size)
         print_classification_report(test_y.argmax(axis=1), predictions.argmax(axis=1), labels)
         plot_confusion_matrix(test_y.argmax(axis=1), predictions.argmax(axis=1), labels)

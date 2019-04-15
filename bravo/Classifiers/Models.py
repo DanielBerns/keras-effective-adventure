@@ -75,9 +75,39 @@ def build_MyNet(data_shape,
     model.add(Dense(num_classes * 16, activation='selu'))
     model.add(Dense(num_classes * 8, activation='selu'))
     model.add(Dense(num_classes, activation='softmax'))
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.compile(loss=model_loss, 
+                  optimizer=model_optimizer, 
+                  metrics=['accuracy'])
     return model
     
+def build_NewNet(data_shape, 
+                 num_classes, 
+                 filters_0=32, 
+                 filters_1=64,
+                 filters_2=128,
+                 activation_function='selu',
+                 dropout=0.25,
+                 model_loss='categorical_crossentropy',
+                 model_optimizer='adam'):
+    model = Sequential()
+    model.add(Conv2D(filters_0, (3, 3), strides=(2, 2), 
+                     input_shape=data_shape, 
+                     activation=activation_function))
+    model.add(Dropout(dropout))
+    model.add(Conv2D(filters_1, (3, 3), strides=(2, 2),
+                     activation=activation_function))
+    model.add(Dropout(dropout))
+    model.add(Conv2D(filters_2, (3, 3), strides=(2, 2),
+                     activation=activation_function))
+    model.add(Dropout(dropout))
+    model.add(Flatten())
+    model.add(Dense(num_classes * 16, activation='selu'))
+    model.add(Dense(num_classes * 8, activation='selu'))
+    model.add(Dense(num_classes, activation='softmax'))
+    model.compile(loss=model_loss, 
+                  optimizer=model_optimizer, 
+                  metrics=['accuracy'])
+    return model
     
 def build_AlexNet(data_shape=(224, 224, 3),
                   num_classes=100,
@@ -180,10 +210,10 @@ def build_AlexNet(data_shape=(224, 224, 3),
     return model
 
 
-def build_VGG16(data_shape=(224, 224, 3),
-                num_classes=1000,
-                model_loss='categorical_crossentropy',
-                model_optimizer='adam'):
+def build_VGG_16(data_shape=(224, 224, 3),
+                 num_classes=1000,
+                 model_loss='categorical_crossentropy',
+                 model_optimizer='adam'):
     model = Sequential()
     
     model.add(ZeroPadding2D((1, 1), input_shape=data_shape))

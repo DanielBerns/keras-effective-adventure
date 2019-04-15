@@ -1,12 +1,6 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
-from keras.layers import Conv2D, MaxPooling2D, Activation
-
-import numpy as np
-
-from Core import Classifier
-from Datasets import get_keras_mnist
-from Models import build_MyNet
+from Classifiers import Classifier
+from Classifiers import get_keras_mnist
+from Classifiers import build_MyNet
 
 
 if __name__ == '__main__':
