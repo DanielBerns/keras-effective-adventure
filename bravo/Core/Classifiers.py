@@ -38,6 +38,14 @@ def plot_history_loss_and_accuracy(history):
     axs[1].legend(['train', 'validation'], loc='upper left')
 
 
+def print_summary(model):
+    # https://stackoverflow.com/questions/41665799/keras-model-summary-object-to-string
+    strings = []
+    model.summary(print_fn=lambda x: strings.append(x))
+    model_summary = "\n".join(strings)
+    print(model_summary)
+
+
 class Classifier:
     def __init__(self):
         self._validation_split = 0.2
@@ -81,6 +89,9 @@ class Classifier:
     
     def train(self, model, train_X, train_y, test_X, test_y, labels):
         print("# Classifier")
+        print('##   Model Sumary')
+        print_summary(model)
+
         print("##   Training network...")
         history = model.fit(train_X, train_y, 
                             validation_split=self.validation_split,
