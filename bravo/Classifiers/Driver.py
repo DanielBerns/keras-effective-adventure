@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from keras.preprocessing.image import ImageDataGenerator
+from keras.callbacks import LearningRateScheduler
 
 
 def print_summary(target, model):
@@ -30,7 +31,6 @@ def plot_confusion_matrix(y_true, y_predicted, labels):
     plt.ylabel('true label')
     plt.xlabel('predicted label')
 
-
 def plot_history_loss_and_accuracy(history):
     fig, axs = plt.subplots(1, 2, figsize=(12, 4))
     axs[0].plot(history.history['loss'])
@@ -47,8 +47,22 @@ def plot_history_loss_and_accuracy(history):
     axs[1].legend(['train', 'validation'], loc='upper left')
 
 
-
-
+def build_step_decay(initial_alpha, factor):
+    def step_decay(epoch):
+        # initialize the base initial learning rate, drop factor, and
+        # epochs to drop every
+        _initial_alpha = initial_alpha
+        _factor = factor
+        drop_every = 4
+        # compute learning rate for the current epoch
+        step = np.floor((1 + epoch) / drop_every)
+        alpha = _initial_alpha * (_factor ** step)
+        print('{0:f}'.format(alpha))
+        return float(alpha) # learning rate
+    
+    return step_decay
+    
+    
 class Classifier:
     def __init__(self):
         self._validation_split = 0.2
@@ -90,22 +104,26 @@ class Classifier:
     def predict_batch_size(self):
         return self._predict_batch_size
     
-    def train(self, model, train_X, train_y, test_X, test_y, labels):
+    def train(self, model, train_X, train_y, test_X, test_y, labels, initial_alpha=0.001, factor=0.2):
         print("# Classifier")
+        _callbacks = [LearningRateScheduler(build_step_decay(initial_alpha, factor))]
         output_path = Path(self.output)
         output_path.mkdir(mode=0o700, parents=True, exist_ok=True)
+        
         print('##   Model Sumary')
         with open(Path(output_path, 'model_summary.txt'), 'w') as target:
             print_summary(target, model)
+            
         print("##   Training network...")
-        
         history = model.fit(train_X, train_y, 
                             batch_size=self.train_batch_size,
                             epochs=self.train_epochs, 
                             validation_split=self.validation_split,
                             verbose=2,
-                            shuffle=True)
-
+                            shuffle=True,
+                            callbacks=_callbacks)
+        
+        print("##   Saving network...")
         weights_path = str(Path(output_path, 'weights.h5'))
         model.save(weights_path)
         print("##   Evaluating network...")

@@ -4,6 +4,8 @@ from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D
 from keras.layers import BatchNormalization # https://arxiv.org/pdf/1502.03167v3.pdf
 from keras.layers import Activation
 
+from keras import regularizers
+
 def build_LeNet(data_shape, 
                 num_classes, 
                 model_loss='categorical_crossentropy',
@@ -82,27 +84,58 @@ def build_MyNet(data_shape,
     
 def build_NewNet(data_shape, 
                  num_classes, 
-                 filters_0=32, 
-                 filters_1=64,
-                 filters_2=128,
+                 filters=None,
                  activation_function='selu',
-                 dropout=0.25,
+                 enable_dropout=True, dropout=0.25,
+                 enable_batch_normalization=False,
                  model_loss='categorical_crossentropy',
                  model_optimizer='adam'):
+    if filters==None:
+        filters=[32, 64, 128, 256]
+    channels_dimension = -1
     model = Sequential()
-    model.add(Conv2D(filters_0, (3, 3), strides=(2, 2), 
+    model.add(Conv2D(filters[0], (3, 3), strides=(2, 2), 
                      input_shape=data_shape, 
                      activation=activation_function))
-    model.add(Dropout(dropout))
-    model.add(Conv2D(filters_1, (3, 3), strides=(2, 2),
+    if enable_dropout:
+        model.add(Dropout(dropout))
+    if enable_batch_normalization:
+        model.add(BatchNormalization(axis=channels_dimension))        
+
+    model.add(Conv2D(filters[1], (3, 3), strides=(2, 2),
                      activation=activation_function))
-    model.add(Dropout(dropout))
-    model.add(Conv2D(filters_2, (3, 3), strides=(2, 2),
+    if enable_dropout:
+        model.add(Dropout(dropout))
+    if enable_batch_normalization:
+        model.add(BatchNormalization(axis=channels_dimension))        
+        
+    model.add(Conv2D(filters[2], (3, 3), strides=(2, 2),
                      activation=activation_function))
-    model.add(Dropout(dropout))
+    if enable_dropout:
+        model.add(Dropout(dropout))
+    if enable_batch_normalization:
+        model.add(BatchNormalization(axis=channels_dimension))        
+
+    model.add(Conv2D(filters[3], (2, 2), padding='valid',
+                     activation=activation_function))
+    if enable_dropout:
+        model.add(Dropout(dropout))
+    if enable_batch_normalization:
+        model.add(BatchNormalization(axis=channels_dimension))        
+
     model.add(Flatten())
-    model.add(Dense(num_classes * 16, activation='selu'))
-    model.add(Dense(num_classes * 8, activation='selu'))
+    model.add(Dense(filters[3] * 4, activation='selu'))
+    if enable_dropout:
+        model.add(Dropout(dropout))
+    if enable_batch_normalization:
+        model.add(BatchNormalization(axis=channels_dimension))        
+
+    model.add(Dense(filters[3], activation='selu'))
+    if enable_dropout:
+        model.add(Dropout(dropout))
+    if enable_batch_normalization:
+        model.add(BatchNormalization(axis=channels_dimension))        
+
     model.add(Dense(num_classes, activation='softmax'))
     model.compile(loss=model_loss, 
                   optimizer=model_optimizer, 
