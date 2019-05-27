@@ -32,7 +32,7 @@ def plot_confusion_matrix(y_true, y_predicted, labels):
     plt.xlabel('predicted label')
 
 def plot_history_loss_and_accuracy(history):
-    fig, axs = plt.subplots(1, 2, figsize=(12, 4))
+    fig, axs = plt.subplots(3, 1, figsize=(4, 18))
     axs[0].plot(history.history['loss'])
     axs[0].plot(history.history['val_loss'])
     axs[0].set_title('model loss')
@@ -45,6 +45,10 @@ def plot_history_loss_and_accuracy(history):
     axs[1].set_ylabel('accuracy')
     axs[1].set_xlabel('epoch')
     axs[1].legend(['train', 'validation'], loc='upper left')
+    axs[2].plot(history.history['lr'])
+    axs[2].set_title('learning rate')
+    axs[2].set_ylabel('lr')
+    axs[2].set_xlabel('epoch')
 
 
 def build_step_decay(initial_alpha, factor):
