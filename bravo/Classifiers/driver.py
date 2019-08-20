@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import LearningRateScheduler
+from keras.callbacks import BaseLogger, LearningRateScheduler, ModelCheckpoint
 
 
 def print_summary(target, model):
@@ -15,6 +15,7 @@ def print_summary(target, model):
     model.summary(print_fn=lambda x: strings.append(x))
     model_summary = "\n".join(strings)
     target.write(model_summary)
+
 
 def print_classification_report(y_true, y_predicted, labels):
     print("Print Classification Report")
@@ -31,8 +32,9 @@ def plot_confusion_matrix(y_true, y_predicted, labels):
     plt.ylabel('true label')
     plt.xlabel('predicted label')
 
+
 def plot_history_loss_and_accuracy(history):
-    fig, axs = plt.subplots(3, 1, figsize=(4, 18))
+    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
     axs[0].plot(history.history['loss'])
     axs[0].plot(history.history['val_loss'])
     axs[0].set_title('model loss')
@@ -51,19 +53,17 @@ def plot_history_loss_and_accuracy(history):
     axs[2].set_xlabel('epoch')
 
 
-def build_step_decay(initial_alpha, factor):
+def print_history_keys(history):
+    print('History keys')
+    print(str(history.history.keys()))
+
+
+def build_step_decay(initial_alpha, factor, drop_every=4):
     def step_decay(epoch):
-        # initialize the base initial learning rate, drop factor, and
-        # epochs to drop every
-        _initial_alpha = initial_alpha
-        _factor = factor
-        drop_every = 4
         # compute learning rate for the current epoch
         step = np.floor((1 + epoch) / drop_every)
-        alpha = _initial_alpha * (_factor ** step)
-        print('{0:f}'.format(alpha))
+        alpha = initial_alpha * (factor ** step)
         return float(alpha) # learning rate
-    
     return step_decay
     
     
@@ -110,11 +110,15 @@ class Classifier:
     
     def train(self, model, train_X, train_y, test_X, test_y, labels, initial_alpha=0.001, factor=0.2):
         print("# Classifier")
-        _callbacks = [LearningRateScheduler(build_step_decay(initial_alpha, factor))]
+        # construct the callback to save only the *best* model to disk
+        # based on the validation loss
         output_path = Path(self.output)
         output_path.mkdir(mode=0o700, parents=True, exist_ok=True)
+        learning_rate_scheduler = LearningRateScheduler(build_step_decay(initial_alpha, factor), verbose=1)
+        weights_path = Path(output_path, 'weights.h5')
+        checkpoint = ModelCheckpoint(str(weights_path), monitor="val_loss", save_best_only=True, verbose=1)
         
-        print('##   Model Sumary')
+        print('##   Model Summary')
         with open(Path(output_path, 'model_summary.txt'), 'w') as target:
             print_summary(target, model)
             
@@ -125,11 +129,8 @@ class Classifier:
                             validation_split=self.validation_split,
                             verbose=2,
                             shuffle=True,
-                            callbacks=_callbacks)
+                            callbacks=[learning_rate_scheduler, checkpoint])
         
-        print("##   Saving network...")
-        weights_path = str(Path(output_path, 'weights.h5'))
-        model.save(weights_path)
         print("##   Evaluating network...")
         predictions = model.predict(test_X, batch_size=self.predict_batch_size)
         print_classification_report(test_y.argmax(axis=1), predictions.argmax(axis=1), labels)
@@ -139,6 +140,7 @@ class Classifier:
         plot_history_loss_and_accuracy(history)
         loss_and_accuracy_path = str(Path(output_path, 'loss_and_accuracy.png'))
         plt.savefig(loss_and_accuracy_path)
+        print_history_keys(history)
         print("##   Done")
         # return history
 

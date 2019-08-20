@@ -19,6 +19,24 @@ def get_keras_mnist():
     labels = [str(v) for v in range(10)]
     return train_X, train_y, test_X, test_y, data_shape, labels
 
+def get_reshaped_keras_mnist():
+    print("# Dataset")
+    print('##   load data')
+    (train_X, train_y), (test_X, test_y) = mnist.load_data()
+    print('##   normalize data')
+    RESHAPED = 28 * 28
+    
+    train_X = train_X.reshape(60000, RESHAPED)
+    test_X = test_X.reshape(10000, RESHAPED)
+
+    train_X = train_X.astype('float32') / 255
+    test_X = test_X.astype('float32') / 255
+    print('##   perform one-hot encoding on the classes')
+    train_y = to_categorical(train_y, num_classes=10)
+    test_y = to_categorical(test_y, num_classes=10)
+    data_shape = (RESHAPED,)
+    labels = [str(v) for v in range(10)]
+    return train_X, train_y, test_X, test_y, data_shape, labels
  
 def get_keras_cifar10():
     print("# Dataset")
