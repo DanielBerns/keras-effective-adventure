@@ -16,10 +16,12 @@ class ImageContext:
     def __init__(self, expected_shape=(32, 32, 3), verbose=500):
         self._expected_shape = expected_shape
         self._verbose = verbose
-        self._image = None
-        self._label = None
+        self._current_image = None
+        self._current_label = None
         self._images_list = None
         self._labels_list = None
+        self._images = None
+        self._labels = None
         self._encoder = None
 
     @property
@@ -31,27 +33,29 @@ class ImageContext:
         return self._verbose
 
     @property
-    def image(self):
-        return self._image
+    def current_image(self):
+        return self._current_image
     
-    @image.setter
-    def image(self, value):
-        self._image = value
+    @current_image.setter
+    def current_image(self, value):
+        self._current_image = value
 
     @property
-    def label(self):
-        return self._label
+    def current_label(self):
+        return self._current_label
     
-    @label.setter
-    def label(self, value):
-        self._label = value
+    @current_label.setter
+    def current_label(self, value):
+        self._current_label = value
         
     def add_sample(self):
-        if self.image.shape != self.expected_shape:
+        if self.current_image == None:
+            raise ContextException('ImageContext.add_sample: unexpected none image')
+        if self.current_image.shape != self.expected_shape:
             raise ContextException('ImageContext.add_sample: unexpected image shape')
-        self._images_list.append(self.image)
-        self._labels_list.append(self.label)
-        if self._verbose > 0:
+        self._images_list.append(self.current_image)
+        self._labels_list.append(self.current_label)
+        if self.verbose > 0:
             count = len(self._images_list) + 1
             if (count % self.verbose) == 0:
                 print(f'{count:>5d} samples processed.')
@@ -59,6 +63,9 @@ class ImageContext:
     def start(self):
         self._images_list = []
         self._labels_list = []
+        self._images = None
+        self._labels = None
+        self._encoder = encoder
     
     def stop(self):
         pass
@@ -71,7 +78,10 @@ class ImageContext:
             images, labels, 
             test_size=test_size, 
             random_state=42)
-        return trainX, trainY, testX, testY, images, labels, encoder
+        self._images = images
+        self._labels = labels
+        self._encoder = encoder
+        return trainX, trainY, testX, testY
                            
 
 #----------------------------------------------------------------------
@@ -97,19 +107,19 @@ class Processor:
 
 #----------------------------------------------------------------------
 class ResizeImageProcessor(Processor):
-    def __init__(self, width, height):
+    def __init__(self, shape):
         # the target image width and height for resizing
         super().__init__()
-        self._width = width
-        self._height = height
-
-    @property
-    def width(self):
-        return self._width
+        self._height = shape[0]
+        self._width = shape[1]
 
     @property
     def height(self):    
         return self._height
+
+    @property
+    def width(self):
+        return self._width
 
     def execute(self):
         # resize the image to a fixed size, ignoring the aspect ratio

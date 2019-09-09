@@ -1,15 +1,12 @@
-# import the necessary packages
-import os
-from .Processors import ContextException
-
 class Loader:
     def __init__(self, source, context, processors):
-        # source is the object with a read method
-        # processors is a list of objects with an execute method
-        # Define the dataset source
+        # source is an object with a read method returning an image and a label
+        # context is a data container for image operations
+        # processors is a list of objects with an execute method operating on
+        #    the context data
         self._source = source
         self._context = context
-        # define the dataset processors
+        # Connect the processors with the context
         self._processors = processors
         for p in self.processors:
             p.context = context
@@ -28,16 +25,13 @@ class Loader:
     
     def execute(self):
         self.context.start()
-        count = -1
         for (image, label) in self.source.read():
-            count += 1
-            self.context.count = count
             self.context.image = image
             self.context.label = label
             try:
                 for this_processor in self.processors:
                     this_processor.execute()
-                self.context.add_sample_and_label()
-            except ContextException as message:
+                self.context.add_sample()
+            except Exception as message:
                 print(message)
         self.context.stop()
