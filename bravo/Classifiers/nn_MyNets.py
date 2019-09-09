@@ -1,12 +1,12 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, MaxPooling2D, Dropout, Flatten
 from keras.layers import Conv2D
 from keras.layers import BatchNormalization # https://arxiv.org/pdf/1502.03167v3.pdf
 
 from keras import regularizers
 
 
-def build_AlphaNet(data_shape, 
+def build_MyNetAlpha(data_shape, 
                 number_of_classes, 
                 model_loss='categorical_crossentropy',
                 model_optimizer='adam'):
@@ -29,7 +29,7 @@ def build_AlphaNet(data_shape,
     return model
 
 
-def build_BravoNet(
+def build_MyNetBravo(
     data_shape, 
     number_of_classes, 
     filters=None,
@@ -39,7 +39,6 @@ def build_BravoNet(
     model_loss='categorical_crossentropy',
     model_optimizer='adam'):
     
-    model_name = 'BravoNet'
     if filters==None:
         filters=[32, 64, 128, 256]
     channels_dimension = -1
@@ -92,7 +91,7 @@ def build_BravoNet(
                   metrics=['accuracy'])
     return model
 
-def build_CharlieNet(
+def build_MyNetCharlie(
     data_shape, 
     number_of_classes, 
     filters=None,

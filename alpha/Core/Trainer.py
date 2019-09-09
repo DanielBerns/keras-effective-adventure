@@ -16,7 +16,7 @@ from .Processors import ImageContext
 from .Loaders import Loader
 
 class Trainer:
-    def __init__(self, context):       
+    def __init__(self):       
         self._testX = None
         self._testY = None
         # construct the argument parse and parse the arguments
