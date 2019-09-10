@@ -6,8 +6,8 @@ class Loader:
         #    the context data
         self._source = source
         self._context = context
-        # Connect the processors with the context
         self._processors = processors
+        # Connect the processors with the context
         for p in self.processors:
             p.context = context
 
@@ -26,8 +26,8 @@ class Loader:
     def execute(self):
         self.context.start()
         for (image, label) in self.source.read():
-            self.context.image = image
-            self.context.label = label
+            self.context.current_image = image
+            self.context.current_label = label
             try:
                 for this_processor in self.processors:
                     this_processor.execute()
