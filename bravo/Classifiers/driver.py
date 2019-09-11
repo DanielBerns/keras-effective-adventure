@@ -24,10 +24,10 @@ def print_classification_report(y_true, y_predicted, labels):
     print("Accuracy : {0:s}".format(str(value)))
 
 
-def plot_confusion_matrix(y_true, y_predicted, labels):
+def plot_confusion_matrix(y_true, y_predicted):
     print("Plot Confusion Matrix")
     mtx = confusion_matrix(y_true, y_predicted)
-    fig, ax = plt.subplots(figsize=(8,8))
+    fig, ax = plt.subplots(figsize=(8, 8))
     sns.heatmap(mtx, annot=True, fmt='d', linewidths=.5,  cbar=False, ax=ax)
     plt.ylabel('true label')
     plt.xlabel('predicted label')
@@ -69,16 +69,11 @@ def build_step_decay(initial_alpha, factor, drop_every=4):
     
 class Classifier:
     def __init__(self):
-        self._validation_split = 0.2
         self._train_batch_size = 32
         self._train_epochs = 2
         self._verbose = 1
         self._output = 'output'
         self._predict_batch_size = 32
-
-    @property
-    def validation_split(self):
-        return self._validation_split
 
     @property
     def train_batch_size(self):
@@ -108,7 +103,18 @@ class Classifier:
     def predict_batch_size(self):
         return self._predict_batch_size
     
-    def train(self, model, train_X, train_y, test_X, test_y, labels, initial_alpha=0.001, factor=0.2):
+    def report(self, 
+               model, 
+               train_X, 
+               train_y,
+               test_X, 
+               test_y, 
+               labels,
+               validation_split=None,
+               validation_X=None, 
+               validation_y=None, 
+               initial_alpha=0.001, 
+               factor=0.2):
         print("# Classifier")
         # construct the callback to save only the *best* model to disk
         # based on the validation loss
@@ -122,19 +128,29 @@ class Classifier:
         with open(Path(output_path, 'model_summary.txt'), 'w') as target:
             print_summary(target, model)
             
+        if validation_split == None:
+            assert(not (validation_X is None))
+            assert(not (validation_Y is None))
+            validation_data = (validation_X, validation_y)
+        else:
+            assert((validation_X is None))
+            assert((validation_Y is None))
+            validation_data = None
+
         print("##   Training network...")
         history = model.fit(train_X, train_y, 
                             batch_size=self.train_batch_size,
                             epochs=self.train_epochs, 
-                            validation_split=self.validation_split,
-                            verbose=2,
+                            validation_split=validation_split,
+                            validation_data=validation_data,
+                            verbose=self.verbose,
                             shuffle=True,
                             callbacks=[learning_rate_scheduler, checkpoint])
-        
+
         print("##   Evaluating network...")
         predictions = model.predict(test_X, batch_size=self.predict_batch_size)
         print_classification_report(test_y.argmax(axis=1), predictions.argmax(axis=1), labels)
-        plot_confusion_matrix(test_y.argmax(axis=1), predictions.argmax(axis=1), labels)
+        plot_confusion_matrix(test_y.argmax(axis=1), predictions.argmax(axis=1))
         confusion_matrix_path = str(Path(output_path, 'confusion_matrix.png'))
         plt.savefig(confusion_matrix_path)
         plot_history_loss_and_accuracy(history)
@@ -142,5 +158,4 @@ class Classifier:
         plt.savefig(loss_and_accuracy_path)
         print_history_keys(history)
         print("##   Done")
-        # return history
 
