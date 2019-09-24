@@ -30,8 +30,9 @@ print(np.sum(test_y,axis=0))
 model = build_AlexNet(data_shape, len(set_of_labels))
 classifier = Classifier()
 classifier.train_epochs = 100
-classifier.output = 'output/mnist/AlexNet-alpha'
+classifier.output = 'output/mnist/AlexNet-bravo'
 classifier.build(model, 
                  train_X, train_y, test_X, test_y, set_of_labels, 
                  validation_X=validation_X, validation_y=validation_y,
-                 learning_rate_decay=StepDecay(alpha_zero=0.001, factor=0.5, drop_every=5))
+                 learning_rate_decay=StepDecay(alpha_zero=0.0002, factor=0.5, drop_every=5),
+                 initial_weights="~/Data/Code/keras-effective-adventure/bravo/output/mnist/AlexNet-alpha/weights-epoch_0029.h5")
