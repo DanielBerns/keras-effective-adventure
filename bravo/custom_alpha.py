@@ -2,7 +2,7 @@ import numpy as np
 
 from Classifiers import create_custom_image_dataset, Classifier, build_AlexNet
 
-dataset = create_custom_image_dataset((224, 224, 3), ["/home/dberns/Datasets/dl4cv/animals/"])
+dataset = create_custom_image_dataset((224, 224, 3), ["~/Data/Datasets/dl4cv/animals/"])
 
 train_X, train_y, validation_X, validation_y, test_X, test_y, data_shape, set_of_labels = dataset.get()
 
