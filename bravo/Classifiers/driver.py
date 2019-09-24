@@ -107,7 +107,8 @@ class Classifier:
                validation_split=None,
                validation_X=None, 
                validation_y=None,
-               learning_rate_decay=None):
+               learning_rate_decay=None,
+               initial_weights=None):
         print("# Classifier")
         output_path = Path(self.output)
         output_path.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -116,6 +117,9 @@ class Classifier:
         learning_rate_scheduler = LearningRateScheduler(
             learning_rate_decay,
             verbose=1)
+        if initial_weights:
+            initial_weights_path = Path(initial_weights)
+            model.load_weights(str(initial_weights_path))
         weights_path = Path(output_path, 'weights-epoch_{epoch:04d}.h5')
         # construct the callback to save only the *best* model to disk
         # based on the validation loss
