@@ -4,8 +4,13 @@ from pathlib import Path
 from skimage.io import imread
 
 
-def list_files(base_path, valid_extensions):
+def list_files(base, valid_extensions):
     # loop over the directory structure
+    if '~' in base:
+        base_path = Path(base).expanduser()
+    else:
+        base_path = Path(base)
+    base_path = base_path.absolute()
     for (root, directories, filenames) in os.walk(base_path):
         # loop over the filenames in the current directory
         for filename in filenames:
