@@ -118,7 +118,7 @@ class Classifier:
             learning_rate_decay,
             verbose=1)
         if initial_weights:
-            initial_weights_path = Path(initial_weights)
+            initial_weights_path = Path(initial_weights).expanduser()
             model.load_weights(str(initial_weights_path))
         weights_path = Path(output_path, 'weights-epoch_{epoch:04d}.h5')
         # construct the callback to save only the *best* model to disk
