@@ -6,10 +6,11 @@ class LearningRateDecay:
     def plot(self, epochs, title="Learning Rate Schedule"):
         # compute the set of learning rates for each corresponding
         # epoch
-        lrs = [self(i) for i in epochs]
+        N = np.arange(epochs)
+        lrs = [self(i) for i in N]
 
         # the learning rate schedule
-        plt.plot(epochs, lrs)
+        plt.plot(N, lrs)
         plt.title(title)
         plt.xlabel("Epoch #")
         plt.ylabel("Learning Rate")

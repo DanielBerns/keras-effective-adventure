@@ -9,6 +9,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import BaseLogger, LearningRateScheduler, ModelCheckpoint, EarlyStopping
 from .learning_rate_schedulers import StepDecay
 
+
 def print_summary(target, model):
     # https://stackoverflow.com/questions/41665799/keras-model-summary-object-to-string
     strings = []
@@ -150,7 +151,6 @@ class Classifier:
         except KeyboardInterrupt:
             print('User aborts training')
             print('Using best weigths so far')
-            # model.load_weights(str(weights_path))
         else:
             plot_history_loss_and_accuracy(history)
             loss_and_accuracy_path = str(Path(output_path, 'loss_and_accuracy.png'))
