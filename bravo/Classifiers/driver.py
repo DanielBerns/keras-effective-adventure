@@ -27,7 +27,7 @@ def print_classification_report(y_true, y_predicted, labels):
 
 def plot_confusion_matrix(y_true, y_predicted):
     print("Plot Confusion Matrix")
-    plt.figure()
+    plt.figure(clear=True)
     mtx = confusion_matrix(y_true, y_predicted)
     fig, ax = plt.subplots(figsize=(8, 8))
     sns.heatmap(mtx, annot=True, fmt='d', linewidths=.5,  cbar=False, ax=ax)
@@ -36,7 +36,7 @@ def plot_confusion_matrix(y_true, y_predicted):
 
 
 def plot_history_loss_and_accuracy(history):
-    plt.figure()
+    plt.figure(clear=True)
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
     axs[0].plot(history.history['loss'])
     axs[0].plot(history.history['val_loss'])

@@ -10,6 +10,7 @@ class LearningRateDecay:
         lrs = [self(i) for i in N]
 
         # the learning rate schedule
+        plt.figure(clear=True)
         plt.plot(N, lrs)
         plt.title(title)
         plt.xlabel("Epoch #")
