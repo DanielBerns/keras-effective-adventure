@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.callbacks import BaseLogger, LearningRateScheduler, ModelCheckpoint
-
+from keras.callbacks import BaseLogger, LearningRateScheduler, ModelCheckpoint, EarlyStopping
+from .learning_rate_schedulers import StepDecay
 
 def print_summary(target, model):
     # https://stackoverflow.com/questions/41665799/keras-model-summary-object-to-string
@@ -56,17 +56,8 @@ def plot_history_loss_and_accuracy(history):
 def print_history_keys(history):
     print('History keys')
     print(str(history.history.keys()))
-
-
-def build_step_decay(initial_alpha, factor, drop_every=4):
-    def step_decay(epoch):
-        # compute learning rate for the current epoch
-        step = np.floor((1 + epoch) / drop_every)
-        alpha = initial_alpha * (factor ** step)
-        return float(alpha) # learning rate
-    return step_decay
     
-    
+
 class Classifier:
     def __init__(self):
         self._train_batch_size = 32
@@ -103,7 +94,7 @@ class Classifier:
     def predict_batch_size(self):
         return self._predict_batch_size
     
-    def report(self, 
+    def build(self, 
                model, 
                train_X, 
                train_y,
@@ -112,50 +103,67 @@ class Classifier:
                labels,
                validation_split=None,
                validation_X=None, 
-               validation_y=None, 
-               initial_alpha=0.001, 
-               factor=0.2):
+               validation_y=None,
+               learning_rate_decay=None):
         print("# Classifier")
-        # construct the callback to save only the *best* model to disk
-        # based on the validation loss
         output_path = Path(self.output)
         output_path.mkdir(mode=0o700, parents=True, exist_ok=True)
-        learning_rate_scheduler = LearningRateScheduler(build_step_decay(initial_alpha, factor), verbose=1)
-        weights_path = Path(output_path, 'weights.h5')
-        checkpoint = ModelCheckpoint(str(weights_path), monitor="val_loss", save_best_only=True, verbose=1)
-        
+        if learning_rate_decay is None:
+            learning_rate_decay = StepDecay()
+        learning_rate_scheduler = LearningRateScheduler(
+            learning_rate_decay,
+            verbose=1)
+        weights_path = Path(output_path, 'weights-epoch_{epoch:04d}.h5')
+        # construct the callback to save only the *best* model to disk
+        # based on the validation loss
+        checkpoint = ModelCheckpoint(
+            str(weights_path), monitor="val_loss", 
+            save_best_only=True, 
+            verbose=1)
+        early_stopping = EarlyStopping(
+            patience=10, 
+            restore_best_weights=True, 
+            verbose=1)
         print('##   Model Summary')
         with open(Path(output_path, 'model_summary.txt'), 'w') as target:
             print_summary(target, model)
             
-        if validation_split == None:
+        if validation_split is None:
             assert(not (validation_X is None))
-            assert(not (validation_Y is None))
+            assert(not (validation_y is None))
             validation_data = (validation_X, validation_y)
         else:
             assert((validation_X is None))
-            assert((validation_Y is None))
+            assert((validation_y is None))
             validation_data = None
 
-        print("##   Training network...")
-        history = model.fit(train_X, train_y, 
-                            batch_size=self.train_batch_size,
-                            epochs=self.train_epochs, 
-                            validation_split=validation_split,
-                            validation_data=validation_data,
-                            verbose=self.verbose,
-                            shuffle=True,
-                            callbacks=[learning_rate_scheduler, checkpoint])
-
+        try:
+            print("##   Training network...")
+            history = model.fit(train_X, train_y, 
+                                batch_size=self.train_batch_size,
+                                epochs=self.train_epochs, 
+                                validation_split=validation_split,
+                                validation_data=validation_data,
+                                verbose=self.verbose,
+                                shuffle=True,
+                                callbacks=[learning_rate_scheduler, checkpoint, early_stopping])
+        except KeyboardInterrupt:
+            print('User aborts training')
+            print('Using best weigths so far')
+            # model.load_weights(str(weights_path))
+        else:
+            plot_history_loss_and_accuracy(history)
+            loss_and_accuracy_path = str(Path(output_path, 'loss_and_accuracy.png'))
+            plt.savefig(loss_and_accuracy_path)
+            print_history_keys(history)
         print("##   Evaluating network...")
         predictions = model.predict(test_X, batch_size=self.predict_batch_size)
         print_classification_report(test_y.argmax(axis=1), predictions.argmax(axis=1), labels)
         plot_confusion_matrix(test_y.argmax(axis=1), predictions.argmax(axis=1))
         confusion_matrix_path = str(Path(output_path, 'confusion_matrix.png'))
         plt.savefig(confusion_matrix_path)
-        plot_history_loss_and_accuracy(history)
-        loss_and_accuracy_path = str(Path(output_path, 'loss_and_accuracy.png'))
-        plt.savefig(loss_and_accuracy_path)
-        print_history_keys(history)
+        learning_rate_decay.plot(self.train_epochs)
+        learning_rate_decay_path = str(Path(output_path, 'learning_rate_decay.png'))
+        plt.savefig(learning_rate_decay_path)
         print("##   Done")
 

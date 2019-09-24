@@ -5,13 +5,13 @@ from keras.utils import np_utils
 import numpy as np
 
 #----------------------------------------------------------------------
-class ContextException(Exception):
+class DatasetException(Exception):
     def __init__(self, message):
         super().__init__(message)
 
 
 #----------------------------------------------------------------------
-class ImageContext:
+class SmallDatasetOfImages:
     def __init__(self, expected_shape=(32, 32, 3), verbose=500):
         self._expected_shape = expected_shape
         self._verbose = verbose
@@ -80,12 +80,12 @@ class ImageContext:
         
     def add_sample(self):
         if self.current_image is None:
-            raise ContextException('ImageContext.add_sample: unexpected current_image is None')
+            raise DatasetException('SmallDatasetOfImages.add_sample: unexpected current_image is None')
         try:
             if self.current_image.shape != self.expected_shape:
-                raise ContextException('ImageContext.add_sample: unexpected image shape')
+                raise DatasetException('SmallDatasetOfImages.add_sample: unexpected image shape')
         except AttributeError:
-            raise ContextException('ImageContext.add_sample: unexpected current_image has no shape attribute')            
+            raise DatasetException('SmallDatasetOfImages.add_sample: unexpected current_image has no shape attribute')            
         self._images_list.append(self.current_image)
         self._labels_list.append(self.current_label)
         if self.verbose > 0:
@@ -99,7 +99,7 @@ class ImageContext:
     def stop(self):
         pass
 
-    def build_images_and_labels(self):
+    def build(self):
         images = np.array(self._images_list)
         set_of_labels, codes = np.unique(self._labels_list, return_inverse=True)
         onehots = np_utils.to_categorical(codes)
@@ -109,49 +109,49 @@ class ImageContext:
         self._onehots = onehots
         self._set_of_labels = set_of_labels
 
-    def get_dataset(self, branch=0.20, random_state=42):
+    def get(self, branch=0.20, random_state=42):
         np.random.seed(random_state)
         train_X = list()
-        train_Y = list()
+        train_y = list()
         validation_X = list()
-        validation_Y = list()
+        validation_y = list()
         test_X = list()
-        test_Y = list()
+        test_y = list()
         train_branch = 1.0 - branch
         validation_branch = train_branch**2
         for image, onehot in zip(self.images, self.onehots):
             die = np.random.uniform()
             if die < validation_branch:
                 train_X.append(image)
-                train_Y.append(onehot)
+                train_y.append(onehot)
             elif die < train_branch:
                 validation_X.append(image)
-                validation_Y.append(onehot)
+                validation_y.append(onehot)
             else:
                 test_X.append(image)
-                test_Y.append(onehot)
+                test_y.append(onehot)
         train_X = np.array(train_X)
-        train_Y = np.array(train_Y)
+        train_y = np.array(train_y)
         validation_X = np.array(validation_X)
-        validation_Y = np.array(validation_Y)
+        validation_y = np.array(validation_y)
         test_X = np.array(test_X)
-        test_Y = np.array(test_Y)
-        return train_X, train_Y, validation_X, validation_Y, test_X, test_Y
+        test_y = np.array(test_y)
+        return train_X, train_y, validation_X, validation_y, test_X, test_y, self.expected_shape, self.set_of_labels
                            
         
 #----------------------------------------------------------------------
 class Processor:
     def __init__(self):
-        self._context = None
+        self._dataset = None
         
     @property
-    def context(self):
-        return self._context
+    def dataset(self):
+        return self._dataset
 
-    @context.setter
-    def context(self, value):
-        assert(self._context == None)
-        self._context = value
+    @dataset.setter
+    def dataset(self, value):
+        assert(self._dataset == None)
+        self._dataset = value
 
     def start(self):
         pass
@@ -178,8 +178,8 @@ class ResizeImageProcessor(Processor):
 
     def execute(self):
         # resize the image to a fixed size, ignoring the aspect ratio
-        self.context.current_image = \
-            resize(self.context.current_image, 
+        self.dataset.current_image = \
+            resize(self.dataset.current_image, 
                    (self.width, self.height), anti_aliasing=True)
 
 
@@ -193,5 +193,5 @@ class ImageToArrayProcessor(Processor):
     def execute(self):
         # apply the Keras utility function that correctly rearranges
         # the dimensions of the image
-        self.context.current_image = img_to_array(self.context.current_image)
+        self.dataset.current_image = img_to_array(self.dataset.current_image)
 

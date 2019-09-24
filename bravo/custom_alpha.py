@@ -1,36 +1,35 @@
 import numpy as np
 
-from Classifiers import get_custom_image_context, Driver
+from Classifiers import create_custom_image_dataset, Classifier, build_AlexNet
 
-context = get_custom_image_context((64, 64, 3), ["/home/dberns/Datasets/dl4cv/animals/"])
+dataset = create_custom_image_dataset((224, 224, 3), ["/home/dberns/Datasets/dl4cv/animals/"])
 
-train_X, train_Y, validation_X, validation_Y, test_X, test_Y, data_shape, set_of_labels = context.get_dataset()
+train_X, train_y, validation_X, validation_y, test_X, test_y, data_shape, set_of_labels = dataset.get()
 
-images = context.images
-onehots = context.onehots
+images = dataset.images
+onehots = dataset.onehots
+set_of_labels = dataset.set_of_labels
 
 print('images', len(images))
 print('onehots', len(onehots))
-
-for this_onehot in onehots:
-    print(this_onehot, context.get_label(this_onehot))
+print('set_of_labels', str(set_of_labels))
 
 print('train_X.shape', train_X.shape)
-print('train_Y.shape', train_Y.shape)
+print('train_y.shape', train_y.shape)
 print('validation_X.shape', validation_X.shape)
-print('validation_Y.shape', validation_Y.shape)
+print('validation_y.shape', validation_y.shape)
 print('test_X.shape', test_X.shape)
-print('test_Y.shape', test_Y.shape)
-print(train_Y[0,:], validation_Y[1,:], test_Y[2,:])
+print('test_y.shape', test_y.shape)
+print('train_y[0]', train_y[0,:], 'validation_y[1]', validation_y[1,:], 'test_y[2]', test_y[2,:])
 
-print(np.sum(train_Y,axis=0))
-print(np.sum(validation_Y,axis=0))
-print(np.sum(test_Y,axis=0))
+print(np.sum(train_y,axis=0))
+print(np.sum(validation_y,axis=0))
+print(np.sum(test_y,axis=0))
 
 model = build_AlexNet(data_shape, len(set_of_labels))
-driver = Driver()
-driver.report(model, 
-              train_X, train_Y, 
-              test_X, test_Y, 
-              set_of_labels, 
-              validation_X=validation_X, validation_Y=validation_Y)
+classifier = Classifier()
+classifier.train_epochs = 100
+classifier.output = 'output/mnist/AlexNet-alpha'
+classifier.build(model, 
+                 train_X, train_y, test_X, test_y, set_of_labels, 
+                 validation_X=validation_X, validation_y=validation_y)

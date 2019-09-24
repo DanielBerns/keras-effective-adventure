@@ -1,26 +1,25 @@
 from typing import Dict, List, Tuple
 
 from .sources import ImageWithLabelSource
-from .processors import ResizeImageProcessor, ImageToArrayProcessor, ImageContext
+from .processors import ResizeImageProcessor, ImageToArrayProcessor, SmallDatasetOfImages
 from .loaders import Loader
 
 
-def get_custom_image_context(expected_shape: Tuple[int, int, int], base_paths: List[str]) -> ImageContext:
-    """This function builds a custom ImageContext.
-          Using this ImageContext you can write
-              trainX, trainY, testX, testY = context.get_dataset()
+def create_custom_image_dataset(expected_shape: Tuple[int, int, int], base_paths: List[str]) -> SmallDatasetOfImages:
+    """This function builds a SmallDatasetOfImages.
+          Using this SmallDatasetOfImages you can write
+              trainX, trainY, testX, testY, data_shape, set_of_labels = dataset.get()
           or
-              images = context.images
-              labels = context.labels
-              encoder = context.encoder
+              images = dataset.images
+              labels = dataset.labels
     """
     source = ImageWithLabelSource(base_paths)
-    context = ImageContext(expected_shape=expected_shape)
+    dataset = SmallDatasetOfImages(expected_shape=expected_shape)
     processors = [ResizeImageProcessor(expected_shape), ImageToArrayProcessor()]
-    loader = Loader(source, context, processors)
+    loader = Loader(source, processors, dataset)
     loader.execute()
-    context.build_images_and_labels()
-    return context
+    dataset.build()
+    return dataset
 
     
 

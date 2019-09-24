@@ -1,11 +1,17 @@
 from Classifiers import Classifier
-from Classifiers import get_reshaped_keras_mnist
+from Classifiers import ReshapedKerasMNISTDataset
 from Classifiers import build_MNIST_KerasNet
 
+# import pdb
+
 if __name__ == '__main__':
-    train_X, train_y, test_X, test_y, data_shape, labels = get_reshaped_keras_mnist()
-    model = build_MNIST_KerasNet(len(labels), data_shape)
+    dataset = ReshapedKerasMNISTDataset()
+    train_X, train_y, validation_X, validation_y, test_X, test_y, data_shape, set_of_labels = dataset.get()
+    model = build_MNIST_KerasNet(data_shape, len(set_of_labels))
     classifier = Classifier()
-    classifier.train_epochs = 1
+    classifier.train_epochs = 500
     classifier.output = 'output/mnist/KerasNet-alpha'
-    classifier.train(model, train_X, train_y, test_X, test_y, labels)
+    # pdb.set_trace()
+    classifier.build(model, 
+                     train_X, train_y, test_X, test_y, set_of_labels,
+                     validation_X=validation_X, validation_y=validation_y)

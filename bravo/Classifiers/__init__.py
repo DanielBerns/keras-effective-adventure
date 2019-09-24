@@ -1,9 +1,9 @@
 from .driver import Classifier
-from .keras_datasets import get_keras_mnist
-from .keras_datasets import get_reshaped_keras_mnist
+from .keras_datasets import KerasMNISTDataset, ReshapedKerasMNISTDataset
 from .keras_datasets import get_keras_cifar10
+from .learning_rate_schedulers import StepDecay, PolynomialDecay
 
-from .custom_datasets import get_custom_image_context
+from .custom_datasets import create_custom_image_dataset
 
 from .nn_LeNets import build_LeNet
 from .nn_LeNets import build_LeNet_5
